@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour
     CharacterController characterController;
 
     Animator animator;
-
+   
     MeeleFighter meeleFighter;
 
     private void Awake()
