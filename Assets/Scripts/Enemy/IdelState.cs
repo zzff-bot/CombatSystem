@@ -14,16 +14,25 @@ public class IdelState : State<EnemyController>
 
     public override void Execute()
     {
-        Debug.Log("Excuting Idle State");
-
-        if (Input.GetKeyDown(KeyCode.T))
+        foreach (var target in enemy.TargetsInRange)
         {
-            enemy.ChangeState(EnemyStates.Chase);
+            var vecToTarget = target.transform.position - transform.position;
+
+            //计算敌人面前的方向与玩家位置的角度
+            float angle = Vector3.Angle(transform.forward, vecToTarget);
+
+            //敌人视角180°/ 2，这样当在敌人面前的左右两边90°内，都是在范围内
+            if (angle <= enemy.Fov / 2)
+            {
+                enemy.Target = target;
+                enemy.ChangeState(EnemyStates.CombatMovement);
+                break;
+            }
         }
     }
 
     public override void Exit()
     {
-        Debug.Log("Exiting Idle State");
+        
     }
 }

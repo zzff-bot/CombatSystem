@@ -38,7 +38,7 @@ public class PlayerController : MonoBehaviour
         if (meeleFighter.InAction)
         {
             //因为虽然没有移动但是动画moveAount值还不为0
-            animator.SetFloat("moveAmount", 0);
+            animator.SetFloat("fowardSpeed", 0);
             return;
         }
 
@@ -82,7 +82,7 @@ public class PlayerController : MonoBehaviour
             transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
         //增加阻尼和时间
-        animator.SetFloat("moveAmount", moveAmount, 0.2f, Time.deltaTime);
+        animator.SetFloat("fowardSpeed", moveAmount, 0.2f, Time.deltaTime);
 
     }
 
