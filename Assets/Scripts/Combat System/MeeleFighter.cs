@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum AttackState { Idle, Windup, Imapct, Cooldown}
+public enum AttackStates{ Idle, Windup, Imapct, Cooldown}
 
 
 public class MeeleFighter : MonoBehaviour
@@ -15,13 +15,15 @@ public class MeeleFighter : MonoBehaviour
 
     Animator animator;
 
-    AttackState attackState;
+    public AttackStates AttackState { get; private set; }
 
     bool doCombo;
     int comboCount = 0;
 
     //将其设置为一个属性，并将set设为私人，使其他类不能随便改变(属性要以大写字母开头)
     public bool InAction { get; private set; } = false;  //是否正在攻击
+
+    public bool InCounter { get; set; }
 
     private void Awake()
     {
@@ -49,7 +51,7 @@ public class MeeleFighter : MonoBehaviour
         {
             StartCoroutine(Attack());
         }
-        else if (attackState == AttackState.Imapct || attackState == AttackState.Cooldown)
+        else if (AttackState == AttackStates.Imapct || AttackState == AttackStates.Cooldown)
         {
             doCombo = true;
         }
@@ -59,7 +61,7 @@ public class MeeleFighter : MonoBehaviour
     {
         InAction = true;
 
-        attackState = AttackState.Windup;
+        AttackState = AttackStates.Windup;
 
         //动画过度函数：占原动画20%时，过度到下一个动画
         animator.CrossFade(attacks[comboCount].AnimName, 0.2f);
@@ -77,24 +79,26 @@ public class MeeleFighter : MonoBehaviour
 
             float normalizedTime = timer / animState.length;
 
-            if (attackState == AttackState.Windup)
+            if (AttackState == AttackStates.Windup)
             {
+                if (InCounter) break;
+
                 if(normalizedTime >= attacks[comboCount].ImpactStartTime)
                 {
-                    attackState = AttackState.Imapct;
+                    AttackState = AttackStates.Imapct;
                     //打开触发器
                     EnableHitBox(attacks[comboCount]);
                 }
-            }else if (attackState == AttackState.Imapct)
+            }else if (AttackState == AttackStates.Imapct)
             {
                 if (normalizedTime >= attacks[comboCount].ImpactEndTime)
                 {
-                    attackState = AttackState.Cooldown;
+                    AttackState = AttackStates.Cooldown;
                     //关闭触发器
                     DisableAllHitBoxes();
                 }
             }
-            else if (attackState == AttackState.Cooldown)
+            else if (AttackState == AttackStates.Cooldown)
             {
                 if (doCombo)
                 {
@@ -113,7 +117,7 @@ public class MeeleFighter : MonoBehaviour
             yield return null;
         }
 
-        attackState = AttackState.Idle;
+        AttackState = AttackStates.Idle;
         comboCount = 0;
         InAction = false;
     }
@@ -141,6 +145,51 @@ public class MeeleFighter : MonoBehaviour
 
         //暂时等待相应时间后执行下一行函数
         yield return new WaitForSeconds(animState.length * 0.8f);
+
+        InAction = false;
+    }
+
+    public IEnumerator PerformCounterAttack(EnemyController opponent)
+    {
+        InAction = true;
+
+        InCounter = true;
+        opponent.Fighter.InCounter = true;
+        opponent.ChangeState(EnemyStates.Dead);
+
+        // 让敌人受到攻击,敌人和玩家能够面对面
+        var dispVec = opponent.transform.position - transform.position;
+        dispVec.y = 0f;
+        transform.rotation = Quaternion.LookRotation(dispVec);
+        opponent.transform.rotation = Quaternion.LookRotation(-dispVec);
+
+        //动画过度函数：占原动画20%时，过度到下一个动画
+        animator.CrossFade("CounterAttack", 0.2f);
+        opponent.Animator.CrossFade("CounterAttackVictim", 0.2f);
+
+        // 设定为距离玩家1m远
+        var targetPos = opponent.transform.position - dispVec.normalized * 1f;
+                
+        //当调用 animator.CrossFade("Slash", 0.2f) 时，
+        //动画系统并不会立即切换到 "Slash" 状态，而是需要一帧的时间来处理过渡逻辑：
+        yield return null;
+
+        //获取下一个的动画信息(因为当前使用的是淡出动画函数，过渡到下一个)(1为动画层索引)
+        var animState = animator.GetNextAnimatorStateInfo(1);
+
+        //暂时等待相应时间后执行下一行函数
+        float timer = 0f;
+        while (timer <= animState.length)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, 5 * Time.deltaTime);
+
+            yield return null;
+
+            timer += Time.deltaTime;
+        }
+
+        InCounter = false;
+        opponent.Fighter.InCounter = false;
 
         InAction = false;
     }
@@ -173,11 +222,18 @@ public class MeeleFighter : MonoBehaviour
 
     void DisableAllHitBoxes()
     {
-        swordCollider.enabled = false;
-        leftHandCollider.enabled = false;
-        rightHandCollider.enabled = false;
-        leftFootCollider.enabled = false;
-        rightFootCollider.enabled = false;
+        if (swordCollider != null) swordCollider.enabled = false;
+
+        if (leftHandCollider != null) leftHandCollider.enabled = false;
+
+        if (rightHandCollider != null) rightHandCollider.enabled = false;
+
+        if (leftFootCollider != null) leftFootCollider.enabled = false;
+
+        if (rightFootCollider != null) rightFootCollider.enabled = false;
     }
 
+    public List<AttackData> Attacks => attacks;
+
+    public bool IsCounterable => AttackState == AttackStates.Windup && comboCount == 0;
 }

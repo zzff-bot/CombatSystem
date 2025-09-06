@@ -37,6 +37,9 @@ public class PlayerController : MonoBehaviour
     {
         if (meeleFighter.InAction)
         {
+            // 进行反击后，将当前位置设置为旋转位置，避免反击后又出现一个突然的旋转
+            targetRotation = transform.rotation;
+
             //因为虽然没有移动但是动画moveAount值还不为0
             animator.SetFloat("fowardSpeed", 0);
             return;
