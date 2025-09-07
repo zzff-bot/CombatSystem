@@ -73,16 +73,16 @@ BlendTree:
     m_DirectBlendParameter: fowardSpeed
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: aa12d794fdcf34e4cb3091bb0e81b06c,
+    m_Motion: {fileID: -203655887218126122, guid: 5c220d6d093b38942ab9717a780e2374,
       type: 3}
     m_Threshold: 0.2
-    m_Position: {x: 0, y: 0.2}
+    m_Position: {x: -0, y: 0.2}
     m_TimeScale: 1
     m_CycleOffset: 0
     m_DirectBlendParameter: fowardSpeed
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: a3aa6d4066fd23047aec7034568e8f13,
+    m_Motion: {fileID: -203655887218126122, guid: 2a7eee83aee90e84d8e582f85ac1c050,
       type: 3}
     m_Threshold: 0.4
     m_Position: {x: 0, y: 1}

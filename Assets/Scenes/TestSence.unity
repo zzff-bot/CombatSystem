@@ -524,6 +524,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeRangeBetweenAttacks: {x: 1, y: 4}
+  player: {fileID: 1500739487}
 --- !u!4 &1045032039
 Transform:
   m_ObjectHideFlags: 0
@@ -797,6 +798,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9af74c6054804ed4aa12bc9611e68670, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetEnemy: {fileID: 0}
 --- !u!1001 &1524050718
 PrefabInstance:
   m_ObjectHideFlags: 0

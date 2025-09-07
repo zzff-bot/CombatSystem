@@ -25,12 +25,15 @@ public class PlayerController : MonoBehaviour
    
     MeeleFighter meeleFighter;
 
+    CombatController combatController;
+
     private void Awake()
     {
         cameraController = Camera.main.GetComponent<CameraController>();
         animator = GetComponent<Animator>();
         characterController = GetComponent<CharacterController>();
         meeleFighter = GetComponent<MeeleFighter>();
+        combatController = GetComponent<CombatController>();
     }
 
     void Update()
@@ -69,24 +72,57 @@ public class PlayerController : MonoBehaviour
         }
 
         var velocity = moveDir * moveSpeed;
-        velocity.y = ySpeed;
+        
 
-        //角色位置(通过角色控制器)
-        characterController.Move(velocity * Time.deltaTime);
+        
 
-        if (moveAmount > 0)
+        if (combatController.CombatMode)
         {
-            //记录角色旋转位置
-            targetRotation = Quaternion.LookRotation(moveDir);
+            velocity /= 4f;
+
+            // 进入战斗模式时面向敌人
+            var targetVec = combatController.TargetEnemy.transform.position - transform.position;
+            targetVec.y = 0;
+
+            if (moveAmount > 0)
+            {
+                //记录角色旋转位置
+                targetRotation = Quaternion.LookRotation(targetVec);
+                //实现角色原地平滑旋转
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
+
+            //分割速度为向前速度 和 侧向速度
+            // 计算向前的速度：通过向量点积计算 “敌人的移动速度在自身正前方方向上的投影”。
+            float fowardSpeed = Vector3.Dot(velocity, transform.forward);
+            animator.SetFloat("fowardSpeed", fowardSpeed / moveSpeed, 0.2f, Time.deltaTime);
+
+            // 计算测方向的速度：1.计算自身与移动方向的夹角
+            // 2.通过angle * Mathf.Deg2Rad将角度转换为弧度，通过sin算出侧移比例(-1 - 1)，再传给动画器
+            float angle = Vector3.SignedAngle(transform.forward, velocity, Vector3.up);
+            float strafeSpeed = Mathf.Sin(angle * Mathf.Deg2Rad);
+            animator.SetFloat("strafeSpeed", strafeSpeed, 0.2f, Time.deltaTime);
+        }
+        else
+        {
+            if (moveAmount > 0)
+            {
+                //记录角色旋转位置
+                targetRotation = Quaternion.LookRotation(moveDir);
+            }
+
+            //实现角色原地平滑旋转
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+            //增加阻尼和时间
+            animator.SetFloat("fowardSpeed", moveAmount, 0.2f, Time.deltaTime);
         }
 
-        //实现角色原地平滑旋转
-        transform.rotation = Quaternion.RotateTowards(
-            transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-
-        //增加阻尼和时间
-        animator.SetFloat("fowardSpeed", moveAmount, 0.2f, Time.deltaTime);
-
+        //角色位置(通过角色控制器)
+        velocity.y = ySpeed;
+        characterController.Move(velocity * Time.deltaTime);
     }
 
     //地面检测，世界坐标，在角色脚下，检测半径，检测图层

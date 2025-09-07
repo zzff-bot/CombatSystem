@@ -2928,6 +2928,7 @@ GameObject:
   - component: {fileID: 62214112575581493}
   - component: {fileID: 1855602847003001309}
   - component: {fileID: 6897713284995860433}
+  - component: {fileID: 2079695489605598109}
   - component: {fileID: 2867324730813166572}
   m_Layer: 8
   m_Name: Enemy
@@ -3093,6 +3094,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0769d2ccac2d6f247a9ce68119b63791, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2079695489605598109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8818387676609786666}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0526262668446a548b9525d373ff901b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meshesToHighlight:
+  - {fileID: 9159107264333146858}
+  - {fileID: 2561137922990359087}
+  originalMaterial: {fileID: 1106563633393636324, guid: aa08051f07d880e4c8e0046b321625ef,
+    type: 3}
+  highlightedlMaterial: {fileID: 2100000, guid: 2d60035229833834cbe5b25876bf54ec,
+    type: 2}
 --- !u!195 &2867324730813166572
 NavMeshAgent:
   m_ObjectHideFlags: 0

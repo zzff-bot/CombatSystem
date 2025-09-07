@@ -21,6 +21,7 @@ public class EnemyController : MonoBehaviour
     public CharacterController CharacterController { get; private set; }
     public Animator Animator { get; private set; }
     public MeeleFighter Fighter { get; private set; }
+    public SkinnedMeshHighlighter MeshHighlighter { get; private set; }
     public VisionSensor VisionSensor { get; set; }
 
 
@@ -31,6 +32,7 @@ public class EnemyController : MonoBehaviour
         Animator = GetComponent<Animator>();
         Fighter = GetComponent<MeeleFighter>();
         CharacterController = GetComponent<CharacterController>();
+        MeshHighlighter = GetComponent<SkinnedMeshHighlighter>();
 
         //³õÊ¼»¯×Öµä
         stateDict = new Dictionary<EnemyStates, State<EnemyController>>();

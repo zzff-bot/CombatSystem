@@ -10,6 +10,8 @@ public class IdelState : State<EnemyController>
     {
         enemy = owner;
         Debug.Log("Enter Idle State");
+
+        enemy.Animator.SetBool("combatMode", false);
     }
 
     public override void Execute()
