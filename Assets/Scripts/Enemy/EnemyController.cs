@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public enum EnemyStates { Idle,CombatMovement, Attack, RetreeArterAttack, Dead}
+public enum EnemyStates { Idle,CombatMovement, Attack, RetreeArterAttack, Dead,GettingHit}
 
 public class EnemyController : MonoBehaviour
 {
@@ -41,9 +41,13 @@ public class EnemyController : MonoBehaviour
         stateDict[EnemyStates.Attack] = GetComponent<AttackState>();
         stateDict[EnemyStates.RetreeArterAttack] = GetComponent<RetreeArterAttackState>();
         stateDict[EnemyStates.Dead] = GetComponent<DeadState>();
+        stateDict[EnemyStates.GettingHit] = GetComponent<GettingHitState>();
 
         StateMachine = new StateMachine<EnemyController>(this);
         StateMachine.ChangeState(stateDict[EnemyStates.Idle]);
+
+        // lamda表达式定义委托
+        Fighter.OnGoHit += (MeeleFighter attacker) => ChangeState(EnemyStates.GettingHit);
     }
 
     // 封装一个转换敌人攻击状态的函数
@@ -79,5 +83,24 @@ public class EnemyController : MonoBehaviour
 
         prevPos = transform.position;
         #endregion
+    }
+
+    public MeeleFighter FindTarget()
+    {
+        foreach (var target in TargetsInRange)
+        {
+            var vecToTarget = target.transform.position - transform.position;
+
+            //计算敌人面前的方向与玩家位置的角度
+            float angle = Vector3.Angle(transform.forward, vecToTarget);
+
+            //敌人视角180°/ 2，这样当在敌人面前的左右两边90°内，都是在范围内
+            if (angle <= Fov / 2)
+            {
+                return target;
+            }
+        }
+
+        return null;
     }
 }

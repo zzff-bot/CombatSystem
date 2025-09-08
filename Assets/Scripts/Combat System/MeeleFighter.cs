@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,11 +9,21 @@ public enum AttackStates{ Idle, Windup, Imapct, Cooldown}
 public class MeeleFighter : MonoBehaviour
 {
     [SerializeField] List<AttackData> attacks;
+    [SerializeField] List<AttackData> longRangeAttacks;
+    [SerializeField] float longRangeAttackThreshold = 1.5f;
     [SerializeField] GameObject sword;
+
+    [SerializeField] float rotationSpeed = 500f;
+
+    public bool IsTakingHit { get; private set; } = false;
+
+    // 委托
+    public event Action<MeeleFighter> OnGoHit;
+    public event Action OnHitComplete;
 
     BoxCollider swordCollider;
     SphereCollider leftHandCollider, rightHandCollider, leftFootCollider, rightFootCollider;
-
+    
     Animator animator;
 
     public AttackStates AttackState { get; private set; }
@@ -45,11 +56,11 @@ public class MeeleFighter : MonoBehaviour
         }
     }
 
-    public void TryToAttack()
+    public void TryToAttack(MeeleFighter target = null)
     {
         if (!InAction)
         {
-            StartCoroutine(Attack());
+            StartCoroutine(Attack(target));
         }
         else if (AttackState == AttackStates.Imapct || AttackState == AttackStates.Cooldown)
         {
@@ -57,14 +68,41 @@ public class MeeleFighter : MonoBehaviour
         }
     }
 
-    IEnumerator Attack()
+    IEnumerator Attack(MeeleFighter target = null)
     {
         InAction = true;
-
         AttackState = AttackStates.Windup;
 
+        var attack = attacks[comboCount];
+
+        var attackDir = transform.forward;
+        Vector3 startPos = transform.position;
+        Vector3 targetPos = Vector3.zero;
+        if(target != null)
+        {
+            var vecToTarget = target.transform.position - transform.position;
+            vecToTarget.y = 0;
+            
+            attackDir = vecToTarget.normalized;
+            float distance = vecToTarget.magnitude - attack.DistanceFromTarget;
+
+            // 如果目标敌人较远，设置攻击为远程攻击
+            if (distance > longRangeAttackThreshold && longRangeAttacks.Count > 0)
+            {
+                attack = longRangeAttacks[0];
+            }
+
+            if (attack.MoveToTarget)
+            {
+                if (distance <= attack.MaxMoveDistance)
+                    targetPos = target.transform.position - attackDir * attack.DistanceFromTarget;
+                else
+                    targetPos = startPos + attackDir * attack.MaxMoveDistance;
+            }
+        }
+
         //动画过度函数：占原动画20%时，过度到下一个动画
-        animator.CrossFade(attacks[comboCount].AnimName, 0.2f);
+        animator.CrossFade(attack.AnimName, 0.2f);
         //当调用 animator.CrossFade("Slash", 0.2f) 时，
         //动画系统并不会立即切换到 "Slash" 状态，而是需要一帧的时间来处理过渡逻辑：
         yield return null;
@@ -75,23 +113,37 @@ public class MeeleFighter : MonoBehaviour
         float timer = 0f;
         while (timer <= animState.length)
         {
-            timer += Time.deltaTime;
+            if (IsTakingHit) break;
 
+            timer += Time.deltaTime;
             float normalizedTime = timer / animState.length;
+
+            if(target != null && attack.MoveToTarget)
+            {
+                float percTime = (normalizedTime - attack.MoveStartTime) / (attack.MoveEndTime - attack.MoveStartTime);
+                transform.position = Vector3.Lerp(startPos, targetPos, percTime);
+            }
+
+            //攻击时旋转至摄像头的方向
+            if(attackDir != null)
+            {
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation, Quaternion.LookRotation(attackDir), rotationSpeed * Time.deltaTime);
+            }
 
             if (AttackState == AttackStates.Windup)
             {
                 if (InCounter) break;
 
-                if(normalizedTime >= attacks[comboCount].ImpactStartTime)
+                if(normalizedTime >= attack.ImpactStartTime)
                 {
                     AttackState = AttackStates.Imapct;
                     //打开触发器
-                    EnableHitBox(attacks[comboCount]);
+                    EnableHitBox(attack);
                 }
             }else if (AttackState == AttackStates.Imapct)
             {
-                if (normalizedTime >= attacks[comboCount].ImpactEndTime)
+                if (normalizedTime >= attack.ImpactEndTime)
                 {
                     AttackState = AttackStates.Cooldown;
                     //关闭触发器
@@ -120,20 +172,33 @@ public class MeeleFighter : MonoBehaviour
         AttackState = AttackStates.Idle;
         comboCount = 0;
         InAction = false;
+        //currTarget = null;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Hitbox" && !InAction)
+        if (other.tag == "Hitbox" && !IsTakingHit && !InCounter)
         {
+            var attacker = other.GetComponentInParent<MeeleFighter>();
+            //if (attacker.currTarget != this)
+            //    return;
+
             Debug.Log("角色受伤");
-            StartCoroutine(PlayerHitReaction());
+            StartCoroutine(PlayerHitReaction(attacker));
         }
     }
 
-    IEnumerator PlayerHitReaction()
+    IEnumerator PlayerHitReaction(MeeleFighter attacker)
     {
         InAction = true;
+        IsTakingHit = true;
+
+        var dispVec = attacker.transform.position - transform.position;
+        dispVec.y = 0;
+        transform.rotation = Quaternion.LookRotation(dispVec);
+
+        OnGoHit?.Invoke(attacker);
+
         //动画过度函数：占原动画20%时，过度到下一个动画
         animator.CrossFade("SwordImpact", 0.2f);
         //当调用 animator.CrossFade("Slash", 0.2f) 时，
@@ -146,7 +211,9 @@ public class MeeleFighter : MonoBehaviour
         //暂时等待相应时间后执行下一行函数
         yield return new WaitForSeconds(animState.length * 0.8f);
 
+        OnHitComplete?.Invoke(); 
         InAction = false;
+        IsTakingHit = false;
     }
 
     public IEnumerator PerformCounterAttack(EnemyController opponent)

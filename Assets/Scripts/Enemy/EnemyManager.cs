@@ -35,7 +35,7 @@ public class EnemyManager : MonoBehaviour
         if (enemy == player.targetEnemy)
         {
             enemy.MeshHighlighter?.HighlightMesh(false);
-            player.targetEnemy = GetClosesEnenmyToPlayerDir();
+            player.targetEnemy = GetClosesEnenmyToDirection(player.GetTargetingDir());
             player.targetEnemy?.MeshHighlighter?.HighlightMesh(true);
         }
     }
@@ -71,7 +71,7 @@ public class EnemyManager : MonoBehaviour
         if (timer >= 0.1f)
         {
             timer = 0f;
-            var closetEnenmy = GetClosesEnenmyToPlayerDir();
+            var closetEnenmy = GetClosesEnenmyToDirection(player.GetTargetingDir());
 
             if (closetEnenmy != null && closetEnenmy != player.TargetEnemy)
             {
@@ -89,7 +89,7 @@ public class EnemyManager : MonoBehaviour
     EnemyController SelectEnemyForAttack()
     {
         //OrderByDescending():从大到小排序，FirstOrDefault():取首个元素
-        return enemiesInRange.OrderByDescending(e => e.CombatMovementTimer).FirstOrDefault(e => e.Target != null);
+        return enemiesInRange.OrderByDescending(e => e.CombatMovementTimer).FirstOrDefault(e => e.Target != null && e.IsInState(EnemyStates.CombatMovement));
     }
 
     public EnemyController GetAttackingEnemy()
@@ -98,9 +98,8 @@ public class EnemyManager : MonoBehaviour
         return enemiesInRange.FirstOrDefault(e => e.IsInState(EnemyStates.Attack));
     }
 
-    public EnemyController GetClosesEnenmyToPlayerDir()
+    public EnemyController GetClosesEnenmyToDirection(Vector3 direction)
     {
-        var targetingDir = player.GetTargetingDir();
 
         float miniDistance = Mathf.Infinity;
         EnemyController closestEnenmy = null;
@@ -111,7 +110,7 @@ public class EnemyManager : MonoBehaviour
             vecToEnenmy.y = 0;
 
             // 通过sin算出，敌人与玩家视线方向的距离
-            float angle = Vector3.Angle(targetingDir, vecToEnenmy);
+            float angle = Vector3.Angle(direction, vecToEnenmy);
             float distance = vecToEnenmy.magnitude * Mathf.Sin(angle * Mathf.Deg2Rad);
 
             if (distance < miniDistance)

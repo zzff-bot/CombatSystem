@@ -43,9 +43,18 @@ public class CombatController : MonoBehaviour
         cam = Camera.main.GetComponent<CameraController>();
     }
 
+    private void Start()
+    {
+        meeleFighter.OnGoHit += (MeeleFighter attacker) =>
+        {
+            if (CombatMode && attacker != TargetEnemy.Fighter)
+                TargetEnemy = attacker.GetComponent<EnemyController>();
+        };
+    }
+
     private void Update()
     {
-        if (Input.GetButtonDown("Attack"))
+        if (Input.GetButtonDown("Attack") && !meeleFighter.IsTakingHit)
         {
             var enemy = EnemyManager.i.GetAttackingEnemy();
             if(enemy != null && enemy.Fighter.IsCounterable && !meeleFighter.InAction)
@@ -54,13 +63,16 @@ public class CombatController : MonoBehaviour
             }
             else
             {
-                meeleFighter.TryToAttack();
+                //攻击玩家输入方向上最近的敌人
+                var enemyToAttack = EnemyManager.i.GetClosesEnenmyToDirection(PlayerController.i.GetIntentDirection());
+
+                meeleFighter.TryToAttack(enemyToAttack?.Fighter);
 
                 CombatMode = true;
             }
         }
 
-        if (Input.GetButtonDown("LockOn"))
+        if (Input.GetButtonDown("LockOn") || JoystickHelper.i.GetAxisDown("LockOnTrigger"))
         {
             CombatMode = !CombatMode;
         }
@@ -76,9 +88,17 @@ public class CombatController : MonoBehaviour
 
     public Vector3 GetTargetingDir()
     {
-        //获取玩家的视线方向
-        var vecFromCam = transform.position - cam.transform.position;
-        vecFromCam.y = 0;
-        return vecFromCam.normalized;
+        if (!combatMode)
+        {
+            //获取玩家的视线方向
+            var vecFromCam = transform.position - cam.transform.position;
+            vecFromCam.y = 0;
+            return vecFromCam.normalized;
+        }
+        else
+        {
+            return transform.forward;
+        }
+        
     }
 }

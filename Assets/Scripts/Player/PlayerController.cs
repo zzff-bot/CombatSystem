@@ -17,6 +17,8 @@ public class PlayerController : MonoBehaviour
     float ySpeed;
     Quaternion targetRotation;
 
+    public Vector3 InputDir { get; private set; }
+
     CameraController cameraController;
 
     CharacterController characterController;
@@ -27,6 +29,9 @@ public class PlayerController : MonoBehaviour
 
     CombatController combatController;
 
+    public static PlayerController i;
+
+
     private void Awake()
     {
         cameraController = Camera.main.GetComponent<CameraController>();
@@ -34,6 +39,7 @@ public class PlayerController : MonoBehaviour
         characterController = GetComponent<CharacterController>();
         meeleFighter = GetComponent<MeeleFighter>();
         combatController = GetComponent<CombatController>();
+        i = this;
     }
 
     void Update()
@@ -59,6 +65,7 @@ public class PlayerController : MonoBehaviour
         var moveInput = (new Vector3(h , 0, v)).normalized;
 
         var moveDir = cameraController.PlanarRotation * moveInput;
+        InputDir = moveDir;
 
         GroundCheck();
         //Debug.Log("isGround = " + isGround);
@@ -83,6 +90,7 @@ public class PlayerController : MonoBehaviour
             // 进入战斗模式时面向敌人
             var targetVec = combatController.TargetEnemy.transform.position - transform.position;
             targetVec.y = 0;
+            
 
             if (moveAmount > 0)
             {
@@ -129,6 +137,11 @@ public class PlayerController : MonoBehaviour
     void GroundCheck()
     {
         isGround = Physics.CheckSphere(transform.TransformPoint(groundCheckOffset), groundCheckRadius, groundLayer);
+    }
+
+    public Vector3 GetIntentDirection()
+    {
+        return InputDir != Vector3.zero ? PlayerController.i.InputDir : transform.forward;
     }
 
     //脚本所挂载的物体被选中时才会执行：实现可视化
