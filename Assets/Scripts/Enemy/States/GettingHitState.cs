@@ -20,6 +20,8 @@ public class GettingHitState : State<EnemyController>
     {
         // 晕眩一下会儿后，回到战斗退后状态
         yield return new WaitForSeconds(stunnTime);
-        enemy.ChangeState(EnemyStates.CombatMovement);
+
+        if(!enemy.IsInState(EnemyStates.Dead))
+            enemy.ChangeState(EnemyStates.CombatMovement);
     }
 }

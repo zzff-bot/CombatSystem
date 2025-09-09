@@ -44,7 +44,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (meeleFighter.InAction)
+        if (meeleFighter.InAction || meeleFighter.Health <= 0)
         {
             // 进行反击后，将当前位置设置为旋转位置，避免反击后又出现一个突然的旋转
             targetRotation = transform.rotation;
@@ -88,6 +88,7 @@ public class PlayerController : MonoBehaviour
             velocity /= 4f;
 
             // 进入战斗模式时面向敌人
+            //错误：在战斗模式时没有敌人，会产生空引用
             var targetVec = combatController.TargetEnemy.transform.position - transform.position;
             targetVec.y = 0;
             

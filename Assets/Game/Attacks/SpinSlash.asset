@@ -17,7 +17,7 @@ MonoBehaviour:
   <ImpactStartTime>k__BackingField: 0.54
   <ImpactEndTime>k__BackingField: 0.84
   <MoveToTarget>k__BackingField: 1
-  <DistanceFromTarget>k__BackingField: 1
+  <DistanceFromTarget>k__BackingField: 0.9
   <MaxMoveDistance>k__BackingField: 3
   <MoveStartTime>k__BackingField: 0
   <MoveEndTime>k__BackingField: 1

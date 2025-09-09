@@ -20,4 +20,4 @@ MonoBehaviour:
   <DistanceFromTarget>k__BackingField: 0.9
   <MaxMoveDistance>k__BackingField: 0.8
   <MoveStartTime>k__BackingField: 0
-  <MoveEndTime>k__BackingField: 1
+  <MoveEndTime>k__BackingField: 0.36

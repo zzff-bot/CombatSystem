@@ -32,16 +32,13 @@ public class CombatMovementState : State<EnemyController>
     }
 
     public override void Execute()
-    {
-        if (enemy.Target == null)
-        {
-            enemy.Target = enemy.FindTarget();
+    {     
 
-            if (enemy.Target == null)
-            {
-                enemy.ChangeState(EnemyStates.Idle);
-                return;
-            }
+        if(enemy.Target.Health <= 0)
+        {
+            enemy.Target = null;
+            enemy.ChangeState(EnemyStates.Idle);
+            return;
         }
 
         if (Vector3.Distance(enemy.Target.transform.position,enemy.transform.position) > distanceToStand + adjustDistanceThreshould)

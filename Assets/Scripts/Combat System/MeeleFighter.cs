@@ -8,6 +8,8 @@ public enum AttackStates{ Idle, Windup, Imapct, Cooldown}
 
 public class MeeleFighter : MonoBehaviour
 {
+    [field: SerializeField] public float Health { get; private set; } = 25f;
+
     [SerializeField] List<AttackData> attacks;
     [SerializeField] List<AttackData> longRangeAttacks;
     [SerializeField] float longRangeAttackThreshold = 1.5f;
@@ -183,9 +185,21 @@ public class MeeleFighter : MonoBehaviour
             //if (attacker.currTarget != this)
             //    return;
 
+            TakeDamage(5f);
+            OnGoHit?.Invoke(attacker);
             Debug.Log("角色受伤");
-            StartCoroutine(PlayerHitReaction(attacker));
+
+            if (Health > 0)
+                StartCoroutine(PlayerHitReaction(attacker));
+            else
+                PlayerDeathAnimation(attacker);
         }
+    }
+
+    void TakeDamage(float damage)
+    {
+        //确保血量相减后，若是为负数，将其固定为0
+        Health = Mathf.Clamp(Health - damage, 0, Health);
     }
 
     IEnumerator PlayerHitReaction(MeeleFighter attacker)
@@ -197,7 +211,7 @@ public class MeeleFighter : MonoBehaviour
         dispVec.y = 0;
         transform.rotation = Quaternion.LookRotation(dispVec);
 
-        OnGoHit?.Invoke(attacker);
+        
 
         //动画过度函数：占原动画20%时，过度到下一个动画
         animator.CrossFade("SwordImpact", 0.2f);
@@ -214,6 +228,11 @@ public class MeeleFighter : MonoBehaviour
         OnHitComplete?.Invoke(); 
         InAction = false;
         IsTakingHit = false;
+    }
+
+    void PlayerDeathAnimation(MeeleFighter attacker)
+    {
+        animator.CrossFade("FallBackDeath", 0.2f);
     }
 
     public IEnumerator PerformCounterAttack(EnemyController opponent)
